@@ -7,6 +7,8 @@ class App:
         self.photo = None
         self.root = tk.Tk()
         self.root.title("ASCII Image Generator")
+        self.root.geometry("500x600")
+        self.root.configure(bg="gray")
 
         self.label = Label(self.root)
         self.label.pack()
@@ -20,18 +22,18 @@ class App:
         if file_path:
             image = Image.open(file_path)
 
-            ascii = ["Ñ","@","#","W","$","9","8","7","6","5","4","3","2","1","0","?","!","a","b","c",";",":","+","=","-",".","_"]
+            ascii = ["Ñ","@","#","W","$","9","8","7","6","5","4","3","2","1","0","?","!","a","b","c",";",":","+","=","-",".","_", " ", " "]
 
-            resized_image = image.resize((100, 100))  # Nowe wymiary mniejsze niż 400x400 pikseli
+            resized_image = image.resize((80, 80))  # Nowe wymiary mniejsze niż 400x400 pikseli
 
-            canvas = Image.new("RGB", (400, 400))
+            canvas = Image.new("RGB", (320, 320))
 
             # Utwórz obiekt do rysowania na kanwie
             draw = ImageDraw.Draw(canvas)
 
             # Przejdź przez piksele obrazu wynikowego
-            for x in range(400):
-                for y in range(400):
+            for x in range(320):
+                for y in range(320):
                     # Pobierz kolor piksela z przeskalowanego obrazu
                     pixel_color = resized_image.getpixel((x // 4, y // 4))
 
@@ -45,8 +47,8 @@ class App:
 
             width, height = canvas2.size
             aspect_ratio = height / width
-            new_width = 400  # Nowa szerokość pliku ASCII
-            new_height = 400  # Nowa wysokość pliku ASCII
+            new_width = 320  # Nowa szerokość pliku ASCII
+            new_height = int(aspect_ratio * new_width * 0.55)  # Nowa wysokość pliku ASCII
 
             pixels = canvas2.getdata()
 
@@ -56,27 +58,27 @@ class App:
             new_pixels_count = len(new_pixels)
             ascii_image = [new_pixels[index:index + new_width] for index in range(0, new_pixels_count, new_width)]
 
-            # Dopasuj do kwadratowych wymiarów dodając odstępy
-            ascii_image_square = []
-            for line in ascii_image:
-                padding = " " * (new_width - len(line))
-                line_with_padding = line + padding
-                ascii_image_square.append(line_with_padding)
+            ascii_image = "\n".join(ascii_image)
 
-            ascii_image = "\n".join(ascii_image_square)
+            self.show_ascii_image(ascii_image)
 
-            self.show_ascii_image(ascii_image, new_width, new_height)
-
-    def show_ascii_image(self, ascii_image, width, height):
+    def show_ascii_image(self, ascii_image):
         if self.photo:
             self.photo.image = None
 
-        text_image = Image.new("RGB", (width * 10, height * 10), "black")
-        draw_text = ImageDraw.Draw(text_image)
-        font = ImageFont.load_default()
-        draw_text.text((0, 0), ascii_image, font=font, fill="white")
+        char_width = 8
+        char_height = 14
+        rows = len(ascii_image.split("\n"))
+        cols = len(ascii_image.split("\n")[0])
 
-        text_image_resized = text_image.resize((width, height))
+        text_image = Image.new("RGB", (cols * char_width, rows * char_height), "black")
+        draw_text = ImageDraw.Draw(text_image)
+        font = ImageFont.truetype("arial.ttf", 12)
+
+        for i, line in enumerate(ascii_image.split("\n")):
+            draw_text.text((0, i * char_height), line, font=font, fill="white")
+
+        text_image_resized = text_image.resize((cols * char_width, rows * char_height))
         self.photo = ImageTk.PhotoImage(text_image_resized)
 
         self.label.config(image=self.photo)
